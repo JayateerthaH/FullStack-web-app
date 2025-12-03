@@ -1,4 +1,4 @@
-﻿package com.attendance.Attendance.service;
+package com.attendance.Attendance.service;
 
 import com.attendance.Attendance.Exceptions.ResourceNotFoundException;
 import com.resend.Resend;
@@ -24,17 +24,14 @@ public class EmailService {
         try {
             Resend resend = new Resend(resendApiKey);
 
-            // Read file and convert to Base64
             byte[] fileContent = Files.readAllBytes(qrFile.toPath());
             String base64Content = Base64.getEncoder().encodeToString(fileContent);
 
-            // Create attachment
             Attachment attachment = Attachment.builder()
                     .fileName("qr-code.png")
                     .content(base64Content)
                     .build();
 
-            // Create email with attachment
             CreateEmailOptions emailOptions = CreateEmailOptions.builder()
                     .from("Attendance System <onboarding@resend.dev>")
                     .to(to)
