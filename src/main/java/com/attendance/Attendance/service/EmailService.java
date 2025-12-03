@@ -30,7 +30,8 @@ public class EmailService {
             mailSender.send(message);
         }
         catch(Exception ex){
-            throw new ResourceNotFoundException("Email is Invalid");
+            System.err.println("Email sending failed: " + ex.getMessage());
+            throw new ResourceNotFoundException("Failed to send email: " + ex.getMessage());
         }
     }
 }

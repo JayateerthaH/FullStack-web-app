@@ -28,12 +28,6 @@ public class AuthService {
             throw new ResourceNotFoundException("Invalid Password");
         }
 
-        if(user.isRegistered()){
-            return "Already registered";
-        }
-
-        user.setRegistered(true);
-        userRepository.save(user);
         // Generate QR file (email + id)
         File qrFile = qrService.generateQRForEmail(user.getEmail() + user.getId());
 
@@ -44,6 +38,10 @@ public class AuthService {
                 "Here is your QR code for attendance.",
                 qrFile
         );
+
+        // Only mark as registered after successful email send
+        user.setRegistered(true);
+        userRepository.save(user);
 
         return "Login success! QR sent to " + user.getEmail();
     }
