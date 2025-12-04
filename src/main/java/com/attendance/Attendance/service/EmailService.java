@@ -15,10 +15,10 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class EmailService {
 
-    @Value("${BREVO_API_KEY:}")
+    @Value("${brevo.api.key:default}")
     private String brevoApiKey;
 
-    @Value("${SENDER_EMAIL:shreyasnkulkarnicr7@gmail.com}")
+    @Value("${sender.email:shreyasnkulkarnicr7@gmail.com}")
     private String senderEmail;
 
     private final OkHttpClient httpClient;
