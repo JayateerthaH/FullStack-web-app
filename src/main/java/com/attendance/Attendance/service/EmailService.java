@@ -22,6 +22,9 @@ public class EmailService {
     @Value("${SENDPULSE_CLIENT_SECRET:}")
     private String clientSecret;
 
+    @Value("${SENDPULSE_SENDER_EMAIL:shreyasnkulkarnicr7@gmail.com}")
+    private String senderEmail;
+
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
 
@@ -69,31 +72,29 @@ public class EmailService {
         }
     }
 
-    public void sendQRMail(String to, String subject, String body, File qrFile) throws Exception {
+    public void sendQRMail(String to, String subject, String bodyText, File qrFile) throws Exception {
         try {
             String token = getAccessToken();
 
             byte[] fileContent = Files.readAllBytes(qrFile.toPath());
             String base64Content = Base64.getEncoder().encodeToString(fileContent);
 
-            String jsonPayload = objectMapper.writeValueAsString(new java.util.HashMap<String, Object>() {{
-                put("email", new java.util.HashMap<String, Object>() {{
-                    put("subject", subject);
-                    put("from", new java.util.HashMap<String, String>() {{
-                        put("name", "Attendance System");
-                        put("email", "noreply@sendpulse.com");
-                    }});
-                    put("to", new java.util.ArrayList<java.util.HashMap<String, String>>() {{
-                        add(new java.util.HashMap<String, String>() {{
-                            put("email", to);
-                        }});
-                    }});
-                    put("html", "<p>" + body + "</p><p>Please find your QR code attached.</p>");
-                    put("attachments_binary", new java.util.HashMap<String, String>() {{
-                        put("qr-code.png", base64Content);
-                    }});
-                }});
-            }});
+            String jsonPayload = "{" +
+                "\"email\": {" +
+                    "\"subject\": \"" + escapeJson(subject) + "\"," +
+                    "\"from\": {" +
+                        "\"name\": \"Attendance System\"," +
+                        "\"email\": \"" + senderEmail + "\"" +
+                    "}," +
+                    "\"to\": [{" +
+                        "\"email\": \"" + escapeJson(to) + "\"" +
+                    "}]," +
+                    "\"html\": \"<p>" + escapeJson(bodyText) + "</p><p>Please find your QR code attached.</p>\"," +
+                    "\"attachments_binary\": {" +
+                        "\"qr-code.png\": \"" + base64Content + "\"" +
+                    "}" +
+                "}" +
+            "}";
 
             RequestBody requestBody = RequestBody.create(
                     jsonPayload,
@@ -121,5 +122,14 @@ public class EmailService {
             System.err.println("Email sending failed: " + ex.getMessage());
             throw new ResourceNotFoundException("Failed to send email: " + ex.getMessage());
         }
+    }
+
+    private String escapeJson(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\")
+                   .replace("\"", "\\\"")
+                   .replace("\n", "\\n")
+                   .replace("\r", "\\r")
+                   .replace("\t", "\\t");
     }
 }
