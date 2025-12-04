@@ -1,7 +1,6 @@
 package com.attendance.Attendance.service;
 
 import com.attendance.Attendance.Exceptions.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,20 +15,14 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class EmailService {
 
-    @Value("${SENDPULSE_CLIENT_ID:}")
-    private String clientId;
+    @Value("${BREVO_API_KEY:}")
+    private String brevoApiKey;
 
-    @Value("${SENDPULSE_CLIENT_SECRET:}")
-    private String clientSecret;
-
-    @Value("${SENDPULSE_SENDER_EMAIL:shreyasnkulkarnicr7@gmail.com}")
+    @Value("${SENDER_EMAIL:shreyasnkulkarnicr7@gmail.com}")
     private String senderEmail;
 
     private final OkHttpClient httpClient;
     private final ObjectMapper objectMapper;
-
-    private String accessToken;
-    private long tokenExpiry = 0;
 
     public EmailService() {
         this.httpClient = new OkHttpClient.Builder()
@@ -40,60 +33,25 @@ public class EmailService {
         this.objectMapper = new ObjectMapper();
     }
 
-    private synchronized String getAccessToken() throws IOException {
-        if (accessToken != null && System.currentTimeMillis() < tokenExpiry) {
-            return accessToken;
-        }
-
-        RequestBody body = new FormBody.Builder()
-                .add("grant_type", "client_credentials")
-                .add("client_id", clientId)
-                .add("client_secret", clientSecret)
-                .build();
-
-        Request request = new Request.Builder()
-                .url("https://api.sendpulse.com/oauth/access_token")
-                .post(body)
-                .build();
-
-        try (Response response = httpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                throw new IOException("Failed to get access token: " + response.code());
-            }
-
-            String responseBody = response.body().string();
-            JsonNode json = objectMapper.readTree(responseBody);
-            accessToken = json.get("access_token").asText();
-            int expiresIn = json.get("expires_in").asInt();
-            tokenExpiry = System.currentTimeMillis() + (expiresIn * 1000L) - 60000;
-
-            System.out.println("SendPulse access token obtained successfully");
-            return accessToken;
-        }
-    }
-
     public void sendQRMail(String to, String subject, String bodyText, File qrFile) throws Exception {
         try {
-            String token = getAccessToken();
-
             byte[] fileContent = Files.readAllBytes(qrFile.toPath());
             String base64Content = Base64.getEncoder().encodeToString(fileContent);
 
             String jsonPayload = "{" +
-                "\"email\": {" +
-                    "\"subject\": \"" + escapeJson(subject) + "\"," +
-                    "\"from\": {" +
-                        "\"name\": \"Attendance System\"," +
-                        "\"email\": \"" + senderEmail + "\"" +
-                    "}," +
-                    "\"to\": [{" +
-                        "\"email\": \"" + escapeJson(to) + "\"" +
-                    "}]," +
-                    "\"html\": \"<p>" + escapeJson(bodyText) + "</p><p>Please find your QR code attached.</p>\"," +
-                    "\"attachments_binary\": {" +
-                        "\"qr-code.png\": \"" + base64Content + "\"" +
-                    "}" +
-                "}" +
+                "\"sender\": {" +
+                    "\"name\": \"Attendance System\"," +
+                    "\"email\": \"" + senderEmail + "\"" +
+                "}," +
+                "\"to\": [{" +
+                    "\"email\": \"" + escapeJson(to) + "\"" +
+                "}]," +
+                "\"subject\": \"" + escapeJson(subject) + "\"," +
+                "\"htmlContent\": \"<p>" + escapeJson(bodyText) + "</p><p>Please find your QR code attached.</p>\"," +
+                "\"attachment\": [{" +
+                    "\"name\": \"qr-code.png\"," +
+                    "\"content\": \"" + base64Content + "\"" +
+                "}]" +
             "}";
 
             RequestBody requestBody = RequestBody.create(
@@ -102,8 +60,9 @@ public class EmailService {
             );
 
             Request request = new Request.Builder()
-                    .url("https://api.sendpulse.com/smtp/emails")
-                    .header("Authorization", "Bearer " + token)
+                    .url("https://api.brevo.com/v3/smtp/email")
+                    .header("api-key", brevoApiKey)
+                    .header("Content-Type", "application/json")
                     .post(requestBody)
                     .build();
 
@@ -111,11 +70,11 @@ public class EmailService {
                 String responseBody = response.body().string();
 
                 if (!response.isSuccessful()) {
-                    System.err.println("SendPulse email failed: " + responseBody);
+                    System.err.println("Brevo email failed: " + responseBody);
                     throw new ResourceNotFoundException("Failed to send email: " + responseBody);
                 }
 
-                System.out.println("Email sent successfully via SendPulse: " + responseBody);
+                System.out.println("Email sent successfully via Brevo: " + responseBody);
             }
 
         } catch (IOException ex) {
