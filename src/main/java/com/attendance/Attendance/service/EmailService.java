@@ -1,94 +1,54 @@
 package com.attendance.Attendance.service;
 
 import com.attendance.Attendance.Exceptions.ResourceNotFoundException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import okhttp3.*;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.Attachment;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Base64;
-import java.util.concurrent.TimeUnit;
+import java.util.List;
 
 @Service
 public class EmailService {
 
-    @Value("${brevo.api.key:default}")
-    private String brevoApiKey;
+    @Value("${resend.api.key:default}")
+    private String resendApiKey;
 
-    @Value("${sender.email:shreyasnkulkarnicr7@gmail.com}")
-    private String senderEmail;
-
-    private final OkHttpClient httpClient;
-    private final ObjectMapper objectMapper;
-
-    public EmailService() {
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
-        this.objectMapper = new ObjectMapper();
-    }
-
-    public void sendQRMail(String to, String subject, String bodyText, File qrFile) throws Exception {
+    public void sendQRMail(String to, String subject, String body, File qrFile) throws Exception {
         try {
+            Resend resend = new Resend(resendApiKey);
+
             byte[] fileContent = Files.readAllBytes(qrFile.toPath());
             String base64Content = Base64.getEncoder().encodeToString(fileContent);
 
-            String jsonPayload = "{" +
-                "\"sender\": {" +
-                    "\"name\": \"Attendance System\"," +
-                    "\"email\": \"" + senderEmail + "\"" +
-                "}," +
-                "\"to\": [{" +
-                    "\"email\": \"" + escapeJson(to) + "\"" +
-                "}]," +
-                "\"subject\": \"" + escapeJson(subject) + "\"," +
-                "\"htmlContent\": \"<p>" + escapeJson(bodyText) + "</p><p>Please find your QR code attached.</p>\"," +
-                "\"attachment\": [{" +
-                    "\"name\": \"qr-code.png\"," +
-                    "\"content\": \"" + base64Content + "\"" +
-                "}]" +
-            "}";
-
-            RequestBody requestBody = RequestBody.create(
-                    jsonPayload,
-                    MediaType.parse("application/json")
-            );
-
-            Request request = new Request.Builder()
-                    .url("https://api.brevo.com/v3/smtp/email")
-                    .header("api-key", brevoApiKey)
-                    .header("Content-Type", "application/json")
-                    .post(requestBody)
+            Attachment attachment = Attachment.builder()
+                    .fileName("qr-code.png")
+                    .content(base64Content)
                     .build();
 
-            try (Response response = httpClient.newCall(request).execute()) {
-                String responseBody = response.body().string();
+            CreateEmailOptions emailOptions = CreateEmailOptions.builder()
+                    .from("Attendance System <onboarding@resend.dev>")
+                    .to(to)
+                    .subject(subject)
+                    .html("<p>" + body + "</p><p>Please find your QR code attached.</p>")
+                    .attachments(List.of(attachment))
+                    .build();
 
-                if (!response.isSuccessful()) {
-                    System.err.println("Brevo email failed: " + responseBody);
-                    throw new ResourceNotFoundException("Failed to send email: " + responseBody);
-                }
+            CreateEmailResponse response = resend.emails().send(emailOptions);
+            System.out.println("Email sent successfully! ID: " + response.getId());
 
-                System.out.println("Email sent successfully via Brevo: " + responseBody);
-            }
-
-        } catch (IOException ex) {
+        } catch (ResendException ex) {
+            System.err.println("Resend email failed: " + ex.getMessage());
+            throw new ResourceNotFoundException("Failed to send email: " + ex.getMessage());
+        } catch (Exception ex) {
             System.err.println("Email sending failed: " + ex.getMessage());
             throw new ResourceNotFoundException("Failed to send email: " + ex.getMessage());
         }
-    }
-
-    private String escapeJson(String text) {
-        if (text == null) return "";
-        return text.replace("\\", "\\\\")
-                   .replace("\"", "\\\"")
-                   .replace("\n", "\\n")
-                   .replace("\r", "\\r")
-                   .replace("\t", "\\t");
     }
 }
