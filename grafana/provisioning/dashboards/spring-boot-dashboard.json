@@ -1,0 +1,123 @@
+{
+  "dashboard": {
+    "title": "Attendance System - Spring Boot Metrics",
+    "tags": ["spring-boot", "attendance"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "HTTP Requests per Second",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(http_server_requests_seconds_count{application=\"attendance-system\"}[1m])",
+            "legendFormat": "{{method}} {{uri}} - {{status}}"
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "title": "HTTP Request Duration (95th percentile)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_server_requests_seconds_bucket{application=\"attendance-system\"}[1m]))",
+            "legendFormat": "{{method}} {{uri}}"
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "title": "JVM Memory Used",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{application=\"attendance-system\"}",
+            "legendFormat": "{{area}} - {{id}}"
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "title": "JVM Threads",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "jvm_threads_live_threads{application=\"attendance-system\"}",
+            "legendFormat": "Live Threads"
+          },
+          {
+            "expr": "jvm_threads_daemon_threads{application=\"attendance-system\"}",
+            "legendFormat": "Daemon Threads"
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "title": "Database Connections",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "hikaricp_connections_active{application=\"attendance-system\"}",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "hikaricp_connections_idle{application=\"attendance-system\"}",
+            "legendFormat": "Idle"
+          },
+          {
+            "expr": "hikaricp_connections{application=\"attendance-system\"}",
+            "legendFormat": "Total"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "system_cpu_usage{application=\"attendance-system\"}",
+            "legendFormat": "System CPU"
+          },
+          {
+            "expr": "process_cpu_usage{application=\"attendance-system\"}",
+            "legendFormat": "Process CPU"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "HTTP Status Codes",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(http_server_requests_seconds_count{application=\"attendance-system\"}[1m])",
+            "legendFormat": "{{status}}"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "Garbage Collection",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_count{application=\"attendance-system\"}[1m])",
+            "legendFormat": "{{action}} - {{cause}}"
+          }
+        ]
+      }
+    ],
+    "refresh": "5s",
+    "time": {"from": "now-15m", "to": "now"}
+  }
+}

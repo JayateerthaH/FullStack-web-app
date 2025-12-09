@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Attendance System</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #ffe0e0 0%, #ffd4d4 25%, #ffb3b3 50%, #ffa3a3 75%, #ff9999 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        position: relative;
+        overflow-x: hidden;
+    }
+
+    /* Particles Canvas */
+    #particles-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    body::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -20%;
+        width: 600px;
+        height: 600px;
+        background: radial-gradient(circle, rgba(255, 182, 193, 0.4), transparent);
+        border-radius: 50%;
+        animation: float 8s ease-in-out infinite;
+    }
+
+    body::after {
+        content: '';
+        position: absolute;
+        bottom: -30%;
+        left: -15%;
+        width: 500px;
+        height: 500px;
+        background: radial-gradient(circle, rgba(255, 160, 160, 0.3), transparent);
+        border-radius: 50%;
+        animation: float 6s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0) rotate(0deg); }
+        50% { transform: translateY(-30px) rotate(5deg); }
+    }
+
+    .container {
+        width: 100%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-radius: 24px;
+        padding: 40px;
+        box-shadow: 0 20px 60px rgba(255, 100, 100, 0.25), 
+                    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
+        z-index: 1;
+        border: 1px solid rgba(255, 200, 200, 0.3);
+    }
+
+    @keyframes slideUp {
+        from { 
+            opacity: 0; 
+            transform: translateY(40px) scale(0.95); 
+        }
+        to { 
+            opacity: 1; 
+            transform: translateY(0) scale(1); 
+        }
+    }
+
+    .page { 
+        display: none;
+        animation: fadeIn 0.4s ease;
+    }
+    
+    .active { display: block; }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateX(-10px); }
+        to { opacity: 1; transform: translateX(0); }
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #d63447;
+        font-size: 28px;
+        font-weight: 700;
+        background: linear-gradient(135deg, #ff6b6b, #ee5a6f);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: -0.5px;
+    }
+
+    input {
+        width: 100%;
+        padding: 14px 18px;
+        margin-top: 16px;
+        border-radius: 12px;
+        border: 2px solid #ffc9c9;
+        font-size: 15px;
+        font-family: "Poppins", sans-serif;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        background: #fff;
+        color: #333;
+    }
+
+    input::placeholder {
+        color: #ccc;
+    }
+
+    input:focus {
+        outline: none;
+        border-color: #ff8787;
+        box-shadow: 0 0 0 4px rgba(255, 135, 135, 0.1),
+                    0 4px 12px rgba(255, 107, 107, 0.15);
+        transform: translateY(-2px);
+    }
+
+    input:hover {
+        border-color: #ffb3b3;
+    }
+
+    button {
+        width: 100%;
+        padding: 14px;
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+        border: none;
+        color: white;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 12px;
+        cursor: pointer;
+        margin-top: 20px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+        position: relative;
+        overflow: hidden;
+    }
+
+    button::before {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.3);
+        transform: translate(-50%, -50%);
+        transition: width 0.6s, height 0.6s;
+    }
+
+    button:hover::before {
+        width: 300px;
+        height: 300px;
+    }
+
+    button:hover { 
+        background: linear-gradient(135deg, #ff5252 0%, #d63447 100%);
+        box-shadow: 0 8px 25px rgba(255, 82, 82, 0.4);
+        transform: translateY(-2px);
+    }
+
+    button:active {
+        transform: translateY(0);
+        box-shadow: 0 2px 10px rgba(255, 107, 107, 0.3);
+    }
+
+    p {
+        text-align: center;
+        font-size: 14px;
+        margin-top: 20px;
+        color: #666;
+    }
+
+    a {
+        color: #ff6b6b;
+        cursor: pointer;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        position: relative;
+    }
+
+    a::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #ff6b6b, #ee5a6f);
+        transition: width 0.3s ease;
+    }
+
+    a:hover::after {
+        width: 100%;
+    }
+
+    a:hover {
+        color: #ee5a6f;
+    }
+
+    #errorMsg, #successMsg {
+        margin-bottom: 20px;
+        border-radius: 12px;
+        padding: 14px 18px;
+        display: none;
+        font-size: 14px;
+        font-weight: 500;
+        animation: slideDown 0.4s ease;
+    }
+
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    #errorMsg { 
+        background: linear-gradient(135deg, #ffe0e0, #ffd4d4); 
+        color: #c62828; 
+        border-left: 4px solid #ff5252;
+    }
+    
+    #successMsg { 
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9); 
+        color: #2e7d32; 
+        border-left: 4px solid #66bb6a;
+    }
+
+    #reader { 
+        margin: 20px auto;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+
+    #cameraSection {
+        margin-top: 20px;
+        padding: 20px;
+        background: #fff5f5;
+        border-radius: 12px;
+        border: 2px dashed #ffb3b3;
+    }
+
+    #scanResult {
+        margin-top: 15px;
+        padding: 12px;
+        background: white;
+        border-radius: 8px;
+        color: #666;
+        font-size: 14px;
+        text-align: center;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 480px) {
+        .container {
+            padding: 30px 25px;
+            border-radius: 20px;
+        }
+
+        h2 {
+            font-size: 24px;
+            margin-bottom: 25px;
+        }
+
+        input, button {
+            padding: 12px 16px;
+        }
+
+        body::before, body::after {
+            width: 300px;
+            height: 300px;
+        }
+    }
+
+    @media (max-width: 360px) {
+        .container {
+            padding: 25px 20px;
+        }
+
+        h2 {
+            font-size: 22px;
+        }
+    }
+</style>
+
+</head>
+
+<body>
+
+<!-- Particles Background Canvas -->
+<canvas id="particles-canvas"></canvas>
+
+<div class="container">
+
+    <!-- ERROR + SUCCESS BOX -->
+    <div id="errorMsg"></div>
+    <div id="successMsg"></div>
+
+    <!-- LOGIN PAGE -->
+    <div id="loginPage" class="page active">
+        <h2>Login</h2>
+
+        <input id="loginEmail" placeholder="Email" required>
+        <input id="loginPassword" type="password" placeholder="Password" required>
+
+        <button onclick="login()">Login</button>
+
+        <p>Not registered?
+            <a onclick="show('signupPage')">Sign Up</a>
+        </p>
+    </div>
+
+    <!-- SIGNUP PAGE -->
+    <div id="signupPage" class="page">
+        <h2>Sign Up</h2>
+
+        <input id="username" placeholder="Username" required>
+        <input id="email" placeholder="Email" required>
+        <input id="password" type="password" placeholder="Password" required>
+
+        <button onclick="signup()">Sign Up</button>
+
+        <p>Already have an account?
+            <a onclick="show('loginPage')">Login</a>
+        </p>
+    </div>
+
+    <!-- SCAN PAGE -->
+    <div id="scanPage" class="page">
+        <h2>Logged In Successfully</h2>
+        <p>QR has been sent to your email.</p>
+
+        <button onclick="startCamera()">Open Camera for QR Scan</button>
+
+        <div id="cameraSection" style="display:none; margin-top:20px;">
+            <div id="reader" style="width:300px;"></div>
+            <p id="scanResult"></p>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<!-- Particles Background Script -->
+<script>
+(function() {
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // Configuration
+    const config = {
+        particleCount: 80,
+        particleSpread: 150,
+        speed: 0.3,
+        particleColors: ['#ff6b6b', '#ee5a6f', '#ff8787', '#ffb3b3', '#d63447'],
+        moveParticlesOnHover: true,
+        particleHoverFactor: 2,
+        alphaParticles: true,
+        sizeParticles: { min: 2, max: 5 },
+        connectionDistance: 120,
+        connectionOpacity: 0.15
+    };
+    
+    let particles = [];
+    let mouse = { x: null, y: null };
+    let animationId;
+    
+    // Resize canvas
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    
+    // Particle class
+    class Particle {
+        constructor() {
+            this.x = Math.random() * canvas.width;
+            this.y = Math.random() * canvas.height;
+            this.size = Math.random() * (config.sizeParticles.max - config.sizeParticles.min) + config.sizeParticles.min;
+            this.baseSize = this.size;
+            this.speedX = (Math.random() - 0.5) * config.speed * 2;
+            this.speedY = (Math.random() - 0.5) * config.speed * 2;
+            this.color = config.particleColors[Math.floor(Math.random() * config.particleColors.length)];
+            this.alpha = config.alphaParticles ? Math.random() * 0.5 + 0.3 : 1;
+        }
+        
+        update() {
+            // Move particles
+            this.x += this.speedX;
+            this.y += this.speedY;
+            
+            // Bounce off edges
+            if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+            if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            
+            // Keep within bounds
+            this.x = Math.max(0, Math.min(canvas.width, this.x));
+            this.y = Math.max(0, Math.min(canvas.height, this.y));
+            
+            // Mouse interaction
+            if (config.moveParticlesOnHover && mouse.x !== null && mouse.y !== null) {
+                const dx = mouse.x - this.x;
+                const dy = mouse.y - this.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < config.particleSpread) {
+                    const force = (config.particleSpread - dist) / config.particleSpread;
+                    const angle = Math.atan2(dy, dx);
+                    this.x -= Math.cos(angle) * force * config.particleHoverFactor;
+                    this.y -= Math.sin(angle) * force * config.particleHoverFactor;
+                    this.size = this.baseSize * (1 + force * 0.5);
+                } else {
+                    this.size = this.baseSize;
+                }
+            }
+        }
+        
+        draw() {
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+            ctx.fillStyle = this.color;
+            ctx.globalAlpha = this.alpha;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+        }
+    }
+    
+    // Initialize particles
+    function initParticles() {
+        particles = [];
+        for (let i = 0; i < config.particleCount; i++) {
+            particles.push(new Particle());
+        }
+    }
+    
+    // Draw connections between particles
+    function drawConnections() {
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const dx = particles[i].x - particles[j].x;
+                const dy = particles[i].y - particles[j].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < config.connectionDistance) {
+                    const opacity = (1 - dist / config.connectionDistance) * config.connectionOpacity;
+                    ctx.beginPath();
+                    ctx.strokeStyle = `rgba(255, 107, 107, ${opacity})`;
+                    ctx.lineWidth = 1;
+                    ctx.moveTo(particles[i].x, particles[i].y);
+                    ctx.lineTo(particles[j].x, particles[j].y);
+                    ctx.stroke();
+                }
+            }
+        }
+    }
+    
+    // Animation loop
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw connections first (behind particles)
+        drawConnections();
+        
+        // Update and draw particles
+        particles.forEach(particle => {
+            particle.update();
+            particle.draw();
+        });
+        
+        animationId = requestAnimationFrame(animate);
+    }
+    
+    // Event listeners
+    window.addEventListener('resize', () => {
+        resizeCanvas();
+        initParticles();
+    });
+    
+    window.addEventListener('mousemove', (e) => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    });
+    
+    window.addEventListener('mouseleave', () => {
+        mouse.x = null;
+        mouse.y = null;
+    });
+    
+    // Initialize
+    resizeCanvas();
+    initParticles();
+    animate();
+})();
+</script>
+
+<script>
+
+    function show(pageId) {
+        hideMessages();
+        document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+        document.getElementById(pageId).classList.add("active");
+    }
+
+    function hideMessages() {
+        document.getElementById("errorMsg").style.display = "none";
+        document.getElementById("successMsg").style.display = "none";
+    }
+
+    function showError(msg) {
+        let e = document.getElementById("errorMsg");
+        e.innerText = msg;
+        e.style.display = "block";
+    }
+
+    function showSuccess(msg) {
+        let s = document.getElementById("successMsg");
+        s.innerText = msg;
+        s.style.display = "block";
+    }
+
+    // ------------------ SIGNUP ------------------
+    function signup() {
+        hideMessages();
+
+        const username = document.getElementById("username").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+
+        if (!username || !email || !password) {
+            return showError("All fields are required.");
+        }
+
+        const body = { username, email, password };
+
+        fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        })
+        .then(async res => {
+            let msg = await res.text();
+            if (!res.ok) return showError(msg);
+
+            showSuccess(msg);
+            show("loginPage");
+        })
+        .catch(err => showError("Server Error: " + err.message));
+    }
+
+    // ------------------ LOGIN ------------------
+    function login() {
+        hideMessages();
+
+        const email = document.getElementById("loginEmail").value.trim();
+        const password = document.getElementById("loginPassword").value.trim();
+
+        if (!email || !password) {
+            return showError("Email and Password are required.");
+        }
+
+        const body = { email, password };
+
+        fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        })
+        .then(async res => {
+            let msg = await res.text();
+            if (!res.ok) return showError(msg);
+
+            showSuccess("Login successful! QR sent to your email.");
+            show("scanPage");
+        })
+        .catch(err => showError("Server Error: " + err.message));
+    }
+
+    // ------------------ CAMERA SCAN ------------------
+    function startCamera() {
+        document.getElementById("cameraSection").style.display = "block";
+
+        let scanner = new Html5Qrcode("reader");
+
+        scanner.start(
+            { facingMode: "environment" },
+            { fps: 10, qrbox: 250 },
+
+            async qrData => {
+
+                document.getElementById("scanResult").innerText = "QR Content: " + qrData;
+
+                const body = { scannedData: qrData };
+
+                try {
+                    const response = await fetch("/api/attendance/mark", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(body)
+                    });
+
+                    const text = await response.text();
+                    alert(text);
+
+                } catch (err) {
+                    alert("Error: " + err.message);
+                }
+
+                scanner.stop().then(() => {
+                    console.log("Scanner stopped.");
+                });
+            },
+
+            error => {}
+        );
+    }
+</script>
+
+</body>
+</html>
